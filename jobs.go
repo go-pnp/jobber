@@ -3,6 +3,8 @@ package jobber
 import (
 	"context"
 	"time"
+
+	"github.com/robfig/cron/v3"
 )
 
 type jobFunc func(ctx context.Context) error
@@ -17,48 +19,83 @@ func (i InfinityJob) Timer() *time.Timer {
 	return time.NewTimer(0)
 }
 
-func (i InfinityJob) ResetTimer(handleErr error, timer *time.Timer) {
+func (i InfinityJob) ResetTimer(timer *time.Timer) {
 	timer.Reset(0)
 }
 
 type IntervalJob struct {
-	StartImmediately bool
-	Interval         time.Duration
-	OnErrorInterval  time.Duration
-	Job              func(ctx context.Context) error
+	startImmediately bool
+	interval         time.Duration
+	job              jobFunc
 }
 
 func NewIntervalJob(
 	startImmediately bool,
 	interval time.Duration,
-	onErrorInterval time.Duration,
 	job jobFunc,
 ) IntervalJob {
 	return IntervalJob{
-		StartImmediately: startImmediately,
-		Interval:         interval,
-		OnErrorInterval:  onErrorInterval,
-		Job:              job,
+		startImmediately: startImmediately,
+		interval:         interval,
+		job:              job,
 	}
 }
 
 func (i IntervalJob) Handle(ctx context.Context) error {
-	return i.Job(ctx)
+	return i.job(ctx)
 }
 
 func (i IntervalJob) Timer() *time.Timer {
-	if i.StartImmediately {
+	if i.startImmediately {
 		return time.NewTimer(0)
 	}
 
-	return time.NewTimer(i.Interval)
+	return time.NewTimer(i.interval)
 }
 
-func (i IntervalJob) ResetTimer(handleErr error, timer *time.Timer) {
-	if handleErr != nil {
-		timer.Reset(i.OnErrorInterval)
-		return
+func (i IntervalJob) ResetTimer(timer *time.Timer) {
+	timer.Reset(i.interval)
+}
+
+type CronJob struct {
+	startImmediately bool
+	schedule         cron.Schedule
+	job              jobFunc
+}
+
+func NewCronJob(
+	startImmediately bool,
+	cronStr string,
+	job jobFunc,
+) (CronJob, error) {
+	schedule, err := cron.ParseStandard(cronStr)
+	if err != nil {
+		return CronJob{}, err
 	}
 
-	timer.Reset(i.Interval)
+	return CronJob{
+		startImmediately: startImmediately,
+		schedule:         schedule,
+		job:              job,
+	}, nil
+}
+
+func (i CronJob) Handle(ctx context.Context) error {
+	return i.job(ctx)
+}
+
+func (i CronJob) Timer() *time.Timer {
+	if i.startImmediately {
+		return time.NewTimer(0)
+	}
+
+	return time.NewTimer(i.durationToNextRun())
+}
+
+func (i CronJob) ResetTimer(timer *time.Timer) {
+	timer.Reset(i.durationToNextRun())
+}
+
+func (i CronJob) durationToNextRun() time.Duration {
+	return i.schedule.Next(time.Now()).Sub(time.Now())
 }

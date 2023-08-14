@@ -20,16 +20,16 @@ go get -u github.com/go-pnp/jobber
 type MyJob struct{}
 
 func (j *MyJob) Handle(ctx context.Context) error {
-// Your job logic here
-return nil
+    // Your job logic here
+    return nil
 }
 
 func (j *MyJob) Timer() *time.Timer {
-return time.NewTimer(5 * time.Second)
+    return time.NewTimer(5 * time.Second)
 }
 
-func (j *MyJob) ResetTimer(handleErr error, timer *time.Timer) {
-timer.Reset(5 * time.Second)
+func (j *MyJob) ResetTimer(timer *time.Timer) {
+    timer.Reset(5 * time.Second)
 }
 ```
 2) Initialize the Runner:
@@ -64,6 +64,7 @@ if err := runner.Close(); err != nil {
 Jobber comes with a few predefined jobs that can be used out of the box:
 - **IntervalJob**: Runs a job at a fixed interval.
 - **InfinityJob**: Runs a job with no interval.
+- **CronJob***: Runs a job at cron schedule
 
 ### IntervalJob
 ```go 
@@ -71,7 +72,19 @@ Jobber comes with a few predefined jobs that can be used out of the box:
 job := jobber.NewIntervalJob(
 	true, // First iteration starts immediately
 	5 * time.Second, // Execute every 5 seconds
-	0, // Retry again immediately if job fails
+	func(ctx context.Context) error {
+		// Your job logic here
+        return nil
+    },
+)
+```
+
+### CronJob
+```go 
+// Create a new IntervalJob that runs every 5 seconds
+job, err := jobber.NewCronJob(
+	true, // First iteration starts immediately
+	"*/5 * * * *", // Execute every 5 minutes
 	func(ctx context.Context) error {
 		// Your job logic here
         return nil

@@ -17,7 +17,7 @@ const (
 type Job interface {
 	Handle(ctx context.Context) error
 	Timer() *time.Timer
-	ResetTimer(handleErr error, timer *time.Timer)
+	ResetTimer(timer *time.Timer)
 }
 
 type Runner struct {
@@ -70,7 +70,7 @@ func (r *Runner) Start(ctx context.Context) error {
 			if err != nil {
 				go r.notifyJobError(err)
 			}
-			r.job.ResetTimer(err, timer)
+			r.job.ResetTimer(timer)
 		case <-r.done:
 			return nil
 		}
