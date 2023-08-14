@@ -64,7 +64,7 @@ if err := runner.Close(); err != nil {
 Jobber comes with a few predefined jobs that can be used out of the box:
 - **IntervalJob**: Runs a job at a fixed interval.
 - **InfinityJob**: Runs a job with no interval.
-- **CronJob***: Runs a job at cron schedule
+- **CronJob**: Runs a job at cron schedule
 
 ### IntervalJob
 ```go 
@@ -81,7 +81,7 @@ job := jobber.NewIntervalJob(
 
 ### CronJob
 ```go 
-// Create a new IntervalJob that runs every 5 seconds
+// Create a new NewCronJob that runs every 5 seconds
 job, err := jobber.NewCronJob(
 	true, // First iteration starts immediately
 	"*/5 * * * *", // Execute every 5 minutes
