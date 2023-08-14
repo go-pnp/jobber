@@ -7,17 +7,17 @@ import (
 
 type jobFunc func(ctx context.Context) error
 
-type InfinityLoopJob jobFunc
+type InfinityJob jobFunc
 
-func (i InfinityLoopJob) Handle(ctx context.Context) error {
+func (i InfinityJob) Handle(ctx context.Context) error {
 	return i(ctx)
 }
 
-func (i InfinityLoopJob) Timer() *time.Timer {
+func (i InfinityJob) Timer() *time.Timer {
 	return time.NewTimer(0)
 }
 
-func (i InfinityLoopJob) ResetTimer(handleErr error, timer *time.Timer) {
+func (i InfinityJob) ResetTimer(handleErr error, timer *time.Timer) {
 	timer.Reset(0)
 }
 
