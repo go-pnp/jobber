@@ -3,6 +3,7 @@ package jobber
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -15,6 +16,7 @@ const (
 )
 
 type Job interface {
+	Init(ctx context.Context) error
 	Handle(ctx context.Context) error
 	Timer() *time.Timer
 	ResetTimer(timer *time.Timer)
@@ -57,6 +59,10 @@ func (r *Runner) Start(ctx context.Context) error {
 
 	ctx, r.cancel = context.WithCancel(ctx)
 	defer r.cancel() // This is line is important, otherwise the goroutines can leak
+
+	if err := r.job.Init(ctx); err != nil {
+		return fmt.Errorf("init job: %w", err)
+	}
 
 	timer := r.job.Timer()
 	defer timer.Stop()

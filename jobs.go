@@ -7,9 +7,13 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type jobFunc func(ctx context.Context) error
+type jobFunc = func(ctx context.Context) error
 
 type InfinityJob jobFunc
+
+func (i InfinityJob) Init(ctx context.Context) error {
+	return nil
+}
 
 func (i InfinityJob) Handle(ctx context.Context) error {
 	return i(ctx)
@@ -39,6 +43,10 @@ func NewIntervalJob(
 		interval:         interval,
 		job:              job,
 	}
+}
+
+func (i IntervalJob) Init(ctx context.Context) error {
+	return nil
 }
 
 func (i IntervalJob) Handle(ctx context.Context) error {
@@ -80,22 +88,26 @@ func NewCronJob(
 	}, nil
 }
 
-func (i CronJob) Handle(ctx context.Context) error {
-	return i.job(ctx)
+func (c CronJob) Init(ctx context.Context) error {
+	return nil
 }
 
-func (i CronJob) Timer() *time.Timer {
-	if i.startImmediately {
+func (c CronJob) Handle(ctx context.Context) error {
+	return c.job(ctx)
+}
+
+func (c CronJob) Timer() *time.Timer {
+	if c.startImmediately {
 		return time.NewTimer(0)
 	}
 
-	return time.NewTimer(i.durationToNextRun())
+	return time.NewTimer(c.durationToNextRun())
 }
 
-func (i CronJob) ResetTimer(timer *time.Timer) {
-	timer.Reset(i.durationToNextRun())
+func (c CronJob) ResetTimer(timer *time.Timer) {
+	timer.Reset(c.durationToNextRun())
 }
 
-func (i CronJob) durationToNextRun() time.Duration {
-	return i.schedule.Next(time.Now()).Sub(time.Now())
+func (c CronJob) durationToNextRun() time.Duration {
+	return c.schedule.Next(time.Now()).Sub(time.Now())
 }
