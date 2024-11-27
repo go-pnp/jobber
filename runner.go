@@ -51,18 +51,19 @@ func (r *Runner) Errors() <-chan error {
 }
 
 // Start starts the daemon in non-blocking way.
+// Closing of passed contest will not stop the daemon. To stop the daemon, call Close method.
 func (r *Runner) Start(ctx context.Context) error {
 	if !r.status.CompareAndSwap(StatusIdle, StatusStarting) {
 		return errors.New("daemon is not in idle state")
 	}
 	defer r.status.Store(StatusIdle)
 
-	ctx, r.cancel = context.WithCancel(ctx)
-	defer r.cancel() // This is line is important, otherwise the goroutines can leak
-
 	if err := r.job.Init(ctx); err != nil {
 		return fmt.Errorf("init job: %w", err)
 	}
+
+	ctx, r.cancel = context.WithCancel(context.Background()) // Don't use passed context is by design, as passed ctx shouldn't be used to cancel the daemon, it's used to pass to Init
+	defer r.cancel()
 
 	timer := r.job.Timer()
 	defer timer.Stop()
