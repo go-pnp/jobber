@@ -8,6 +8,10 @@ import (
 
 type TestJob struct{}
 
+func (s TestJob) Init(ctx context.Context) error {
+	return nil
+}
+
 func (s TestJob) Handle(ctx context.Context) error {
 	return nil
 }
@@ -16,7 +20,7 @@ func (s TestJob) Timer() *time.Timer {
 	return time.NewTimer(time.Minute * 30) // execute immediately
 }
 
-func (s TestJob) ResetTimer(handleErr error, timer *time.Timer) {
+func (s TestJob) ResetTimer(timer *time.Timer) {
 	timer.Reset(time.Second) // execute every second
 }
 

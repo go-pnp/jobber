@@ -22,6 +22,10 @@ type Job interface {
 	ResetTimer(timer *time.Timer)
 }
 
+type HandleFunc func(ctx context.Context) error
+
+type Middleware func(next HandleFunc) HandleFunc
+
 type Runner struct {
 	job     Job
 	cancel  context.CancelFunc
@@ -68,12 +72,17 @@ func (r *Runner) Start(ctx context.Context) error {
 	timer := r.job.Timer()
 	defer timer.Stop()
 
+	handle := r.job.Handle
+	for _, m := range r.options.middlewares {
+		handle = m(r.job.Handle)
+	}
+
 	r.status.Store(StatusRunning)
 
 	for {
 		select {
 		case <-timer.C:
-			err := r.job.Handle(ctx)
+			err := handle(ctx)
 			if err != nil {
 				go r.notifyJobError(err)
 			}
