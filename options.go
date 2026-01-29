@@ -6,6 +6,7 @@ type options struct {
 	strictMode          bool
 	errorsNotifyTimeout time.Duration
 	errorsChan          chan error
+	middlewares         []Middleware
 }
 
 type OptionFunc func(o *options)
@@ -25,5 +26,11 @@ func WithErrorsNotifyTimeout(timeout time.Duration) OptionFunc {
 func WithErrorsCh(errorsCh chan error) OptionFunc {
 	return func(o *options) {
 		o.errorsChan = errorsCh
+	}
+}
+
+func WithMiddlewares(middlewares ...Middleware) OptionFunc {
+	return func(o *options) {
+		o.middlewares = append(o.middlewares, middlewares...)
 	}
 }
