@@ -8,6 +8,10 @@ import (
 
 type TestJob struct{}
 
+func (s TestJob) Name() string {
+	return ""
+}
+
 func (s TestJob) Init(ctx context.Context) error {
 	return nil
 }

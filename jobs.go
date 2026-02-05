@@ -11,6 +11,10 @@ type jobFunc = func(ctx context.Context) error
 
 type InfinityJob jobFunc
 
+func (i InfinityJob) Name() string {
+	return "infinity"
+}
+
 func (i InfinityJob) Init(ctx context.Context) error {
 	return nil
 }
@@ -27,22 +31,23 @@ func (i InfinityJob) ResetTimer(timer *time.Timer) {
 	timer.Reset(0)
 }
 
-type IntervalJob struct {
-	startImmediately bool
-	interval         time.Duration
-	job              jobFunc
+type IntervalJobParams struct {
+	Name             string
+	Job              jobFunc
+	Interval         time.Duration
+	StartImmediately bool
 }
 
-func NewIntervalJob(
-	startImmediately bool,
-	interval time.Duration,
-	job jobFunc,
-) IntervalJob {
-	return IntervalJob{
-		startImmediately: startImmediately,
-		interval:         interval,
-		job:              job,
-	}
+type IntervalJob struct {
+	params IntervalJobParams
+}
+
+func NewIntervalJob(params IntervalJobParams) IntervalJob {
+	return IntervalJob{params: params}
+}
+
+func (i IntervalJob) Name() string {
+	return i.params.Name
 }
 
 func (i IntervalJob) Init(ctx context.Context) error {
@@ -50,19 +55,19 @@ func (i IntervalJob) Init(ctx context.Context) error {
 }
 
 func (i IntervalJob) Handle(ctx context.Context) error {
-	return i.job(ctx)
+	return i.params.Job(ctx)
 }
 
 func (i IntervalJob) Timer() *time.Timer {
-	if i.startImmediately {
+	if i.params.StartImmediately {
 		return time.NewTimer(0)
 	}
 
-	return time.NewTimer(i.interval)
+	return time.NewTimer(i.params.Interval)
 }
 
 func (i IntervalJob) ResetTimer(timer *time.Timer) {
-	timer.Reset(i.interval)
+	timer.Reset(i.params.Interval)
 }
 
 type CronJob struct {

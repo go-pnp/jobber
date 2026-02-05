@@ -16,6 +16,7 @@ const (
 )
 
 type Job interface {
+	Name() string
 	Init(ctx context.Context) error
 	Handle(ctx context.Context) error
 	Timer() *time.Timer
