@@ -7,6 +7,12 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+var (
+	_ Job = (*InfinityJob)(nil)
+	_ Job = (*IntervalJob)(nil)
+	_ Job = (*CronJob)(nil)
+)
+
 type jobFunc = func(ctx context.Context) error
 
 type InfinityJob jobFunc
@@ -91,6 +97,10 @@ func NewCronJob(
 		schedule:         schedule,
 		job:              job,
 	}, nil
+}
+
+func (c CronJob) Name() string {
+	return "cron"
 }
 
 func (c CronJob) Init(ctx context.Context) error {
