@@ -15,10 +15,20 @@ var (
 
 type jobFunc = func(ctx context.Context) error
 
-type InfinityJob jobFunc
+type InfinityJob struct {
+	name string
+	job  jobFunc
+}
+
+func NewInfinityJob(name string, job jobFunc) InfinityJob {
+	return InfinityJob{
+		name: name,
+		job:  job,
+	}
+}
 
 func (i InfinityJob) Name() string {
-	return "infinity"
+	return i.name
 }
 
 func (i InfinityJob) Init(ctx context.Context) error {
@@ -26,7 +36,7 @@ func (i InfinityJob) Init(ctx context.Context) error {
 }
 
 func (i InfinityJob) Handle(ctx context.Context) error {
-	return i(ctx)
+	return i.job(ctx)
 }
 
 func (i InfinityJob) Timer() *time.Timer {
@@ -76,31 +86,29 @@ func (i IntervalJob) ResetTimer(timer *time.Timer) {
 	timer.Reset(i.params.Interval)
 }
 
-type CronJob struct {
-	startImmediately bool
-	schedule         cron.Schedule
-	job              jobFunc
+type CronJobParams struct {
+	Name             string
+	Job              jobFunc
+	CronStr          string
+	StartImmediately bool
 }
 
-func NewCronJob(
-	startImmediately bool,
-	cronStr string,
-	job jobFunc,
-) (CronJob, error) {
-	schedule, err := cron.ParseStandard(cronStr)
+type CronJob struct {
+	params   CronJobParams
+	schedule cron.Schedule
+}
+
+func NewCronJob(params CronJobParams) (CronJob, error) {
+	schedule, err := cron.ParseStandard(params.CronStr)
 	if err != nil {
 		return CronJob{}, err
 	}
 
-	return CronJob{
-		startImmediately: startImmediately,
-		schedule:         schedule,
-		job:              job,
-	}, nil
+	return CronJob{params: params, schedule: schedule}, nil
 }
 
 func (c CronJob) Name() string {
-	return "cron"
+	return c.params.Name
 }
 
 func (c CronJob) Init(ctx context.Context) error {
@@ -108,11 +116,11 @@ func (c CronJob) Init(ctx context.Context) error {
 }
 
 func (c CronJob) Handle(ctx context.Context) error {
-	return c.job(ctx)
+	return c.params.Job(ctx)
 }
 
 func (c CronJob) Timer() *time.Timer {
-	if c.startImmediately {
+	if c.params.StartImmediately {
 		return time.NewTimer(0)
 	}
 
