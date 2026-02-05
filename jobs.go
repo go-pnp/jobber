@@ -104,7 +104,10 @@ func NewCronJob(params CronJobParams) (CronJob, error) {
 		return CronJob{}, err
 	}
 
-	return CronJob{params: params, schedule: schedule}, nil
+	return CronJob{
+		params:   params,
+		schedule: schedule,
+	}, nil
 }
 
 func (c CronJob) Name() string {
