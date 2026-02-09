@@ -41,5 +41,5 @@ func (j TracedJob) Handle(ctx context.Context) error {
 		span.SetStatus(codes.Error, err.Error())
 	}
 
-	return nil
+	return err
 }
